@@ -53,7 +53,7 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
   - Tests: migrations are idempotent (running twice is fine), `user_version` is correct, foreign keys are on (deleting a target cascades to its check_results), and the unique constraints hold.
 
 ### Step 2: Cert parser
-- [ ] **2.1 Status calculation (pure)**
+- [x] **2.1 Status calculation (pure)**
   - `src/core/status.ts`: `Status` type, threshold constants, `SEVERITY` order, `calculateDaysLeft(validTo, now)`, `calculateStatus(daysLeft)`.
   - Tests: boundaries 31→OK, 30→WARNING, 8→WARNING, 7→CRITICAL, 0→CRITICAL, −1→EXPIRED, plus daysLeft rounding just before and after a full day.
 - [ ] **2.2 TLS certificate fetcher**
@@ -128,3 +128,4 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
 - 1.1: tsconfig sets `"types": ["node"]` explicitly (newer TS defaults `types` to `[]`) and `verbatimModuleSyntax`, so use `import type` / `type` modifiers for type-only imports. `config.isProduction` (from `NODE_ENV`) is there for the secure cookie in decision 10. `.gitignore` already had `.env.*`, so I added `!.env.example`.
 - 1.2: The `Database` type comes from `src/db/connection.ts`. `tests/helpers.ts` already exists with `createTestDb()` (in-memory DB, migrated), so 3.1 should add to it, not replace it. `runMigrations(db, dir?)` takes an optional folder (the tests use it) and returns the new version.
 - 1.2: The `created_at` / `checked_at` / `sent_at` columns default to the current time in `toISOString()` format, but repositories should still pass `deps.now()` explicitly so tests can control the clock. `targets.last_notified_status` has a CHECK that allows only NULL, WARNING, CRITICAL or EXPIRED (decision 6 never stores OK or ERROR). `index.ts` resolves a relative `DATABASE_PATH` against the project root.
+- 2.1: `calculateStatus` returns `DateStatus` (`Status` minus ERROR), and `SEVERITY` is a `Record<DateStatus, number>`, so ERROR can't be compared by accident. Both functions throw `RangeError` on an invalid date or non-finite daysLeft instead of falling through to OK. The fetcher (2.2) must catch that and return ERROR. `calculateDaysLeft` takes `Date`s, so parse `valid_to` first.
