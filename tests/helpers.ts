@@ -5,6 +5,7 @@ import type { Config } from '../src/config';
 import type { CertCheck } from '../src/core/certFetcher';
 import { openDatabase, type Database } from '../src/db/connection';
 import { runMigrations } from '../src/db/migrate';
+import type { SendMail } from '../src/mail/digest';
 import { createApp, type AppDeps } from '../src/web/app';
 
 /** A fresh in-memory database with every migration applied. */
@@ -51,8 +52,8 @@ export function createFakeDeps() {
     fetchCertificate: vi.fn<AppDeps['fetchCertificate']>(async () => okCertCheck()),
     now: vi.fn(() => new Date(TEST_NOW)),
   } satisfies AppDeps;
-  // AppDeps gets sendMail in step 6. The fake is here already so route tests can assert that nothing sends mail.
-  return { ...deps, sendMail: vi.fn(async (_to: string, _message: unknown) => {}) };
+  // AppDeps gets sendMail in 6.2. The fake is here already so route tests can assert that nothing sends mail.
+  return { ...deps, sendMail: vi.fn<SendMail>(async () => {}) };
 }
 
 export function createTestApp(configOverrides: Partial<Config> = {}) {
