@@ -129,3 +129,156 @@ button {
   background: var(--error-bg);
   color: var(--critical);
 }
+
+h2 {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+}
+
+main > h2 {
+  margin-top: 2rem;
+}
+
+.add-target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.add-target .grow {
+  flex: 1 1 16rem;
+}
+
+.add-target input[type="number"] {
+  width: 7rem;
+}
+
+.empty {
+  color: var(--muted);
+}
+
+.table-wrap {
+  margin-top: 1.5rem;
+  overflow-x: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+th {
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.num {
+  text-align: right;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card > .actions {
+  margin-top: 1.5rem;
+}
+
+button.small {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.small-link {
+  font-size: 0.85rem;
+}
+
+button.danger {
+  background: var(--critical);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--muted);
+}
+
+.status-ok {
+  background: var(--ok);
+}
+
+.status-warning {
+  background: var(--warning);
+}
+
+.status-critical {
+  background: var(--critical);
+}
+
+.status-expired {
+  background: #6d1a12;
+}
+
+.status-error {
+  background: #4a4f5c;
+}
+
+.status-none {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.untrusted {
+  display: inline-block;
+  margin-left: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--warning);
+}
+
+.check-error {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--critical);
+  overflow-wrap: anywhere;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.5rem;
+  margin: 0;
+}
+
+.details dt {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.details dd {
+  margin: 0;
+}

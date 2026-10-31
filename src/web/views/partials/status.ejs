@@ -1,0 +1,12 @@
+<% if (check) { %>
+  <span class="badge <%= statusClass(check.status) %>"><%= check.status %></span>
+  <% const untrusted = untrustedLabel(check); %>
+  <% if (untrusted) { %>
+    <span class="untrusted"><%= untrusted %></span>
+  <% } %>
+  <% if (check.error) { %>
+    <div class="check-error"><%= check.error %></div>
+  <% } %>
+<% } else { %>
+  <span class="badge status-none">not checked</span>
+<% } %>

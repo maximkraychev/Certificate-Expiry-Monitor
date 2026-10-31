@@ -1,4 +1,61 @@
 <%- include('partials/header') %>
 <h1>Dashboard</h1>
-<p>No targets yet.</p>
+
+<section class="card">
+  <h2>Add a target</h2>
+  <form method="post" action="/targets" class="add-target">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="grow">
+      Host
+      <input type="text" name="host" placeholder="example.com" autocomplete="off" spellcheck="false" required>
+    </label>
+    <label>
+      Port
+      <input type="number" name="port" min="1" max="65535" placeholder="443">
+    </label>
+    <button type="submit">Add and check</button>
+  </form>
+</section>
+
+<% if (targets.length === 0) { %>
+  <p class="empty">No targets yet. Add a host above to start monitoring its certificate.</p>
+<% } else { %>
+  <div class="table-wrap">
+    <table class="targets">
+      <thead>
+        <tr>
+          <th>Target</th>
+          <th>Status</th>
+          <th class="num">Days left</th>
+          <th>Expires</th>
+          <th>Last checked</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (const target of targets) { %>
+          <% const check = target.latestCheck; %>
+          <tr>
+            <td><a href="/targets/<%= target.id %>"><%= formatHostPort(target) %></a></td>
+            <td><%- include('partials/status', { check }) %></td>
+            <td class="num"><%= check?.daysLeft ?? '—' %></td>
+            <td><%= formatDate(check?.validTo ?? null) %></td>
+            <td><%= check ? formatDateTime(check.checkedAt) : 'never' %></td>
+            <td class="actions">
+              <form method="post" action="/targets/<%= target.id %>/check">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="small">Check now</button>
+              </form>
+              <a class="small-link" href="/targets/<%= target.id %>">History</a>
+              <form method="post" action="/targets/<%= target.id %>/delete">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="small danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+<% } %>
 <%- include('partials/footer') %>

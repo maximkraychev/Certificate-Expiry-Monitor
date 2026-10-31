@@ -6,8 +6,11 @@ import helmet from 'helmet';
 import type { Config } from '../config';
 import type { FetchCertificate } from '../core/certFetcher';
 import type { Database } from '../db/connection';
+import { renderNotFound } from './errors';
+import { viewHelpers } from './format';
 import { requireAuth } from './middleware/requireAuth';
 import { authRoutes } from './routes/auth';
+import { targetRoutes } from './routes/targets';
 import { createSessionStore, takeFlash } from './session';
 
 export interface AppDeps {
@@ -26,10 +29,11 @@ export interface CreateAppOptions {
 const PUBLIC_DIR = path.join(import.meta.dirname, '..', '..', 'public');
 const VIEWS_DIR = path.join(import.meta.dirname, 'views');
 
-export function createApp({ db, config, clearExpiredSessions = true }: CreateAppOptions): Express {
+export function createApp({ db, config, deps, clearExpiredSessions = true }: CreateAppOptions): Express {
   const app = express();
   app.set('views', VIEWS_DIR);
   app.set('view engine', 'ejs');
+  Object.assign(app.locals, viewHelpers);
 
   app.use(
     helmet({
@@ -70,12 +74,10 @@ export function createApp({ db, config, clearExpiredSessions = true }: CreateApp
   app.use(authRoutes(config));
 
   app.use(requireAuth);
-  app.get('/', (_req, res) => {
-    res.render('dashboard', { title: 'Dashboard' });
-  });
+  app.use(targetRoutes(db, deps));
 
   app.use((_req, res) => {
-    res.status(404).render('error', { title: 'Not found', message: 'That page does not exist.' });
+    renderNotFound(res);
   });
 
   const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
