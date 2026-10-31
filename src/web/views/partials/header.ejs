@@ -12,6 +12,7 @@
     <% if (isAuthenticated) { %>
       <nav>
         <a href="/">Dashboard</a>
+        <a href="/recipients">Recipients</a>
       </nav>
       <form class="logout" method="post" action="/logout">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">

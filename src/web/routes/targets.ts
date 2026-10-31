@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Database } from '../../db/connection';
 import type { CheckResult } from '../../db/repositories/checkResults';
 import { checkTarget, getHistory, type CheckDeps } from '../../services/checks';
+import { hasRecipients } from '../../services/recipients';
 import { addTarget, deleteTarget, formatHostPort, getTarget, listTargetsWithLatestCheck } from '../../services/targets';
 import { renderNotFound } from '../errors';
 import { bodyString, paramId } from '../request';
@@ -11,7 +12,11 @@ export function targetRoutes(db: Database, deps: CheckDeps): Router {
   const router = Router();
 
   router.get('/', (_req, res) => {
-    res.render('dashboard', { title: 'Dashboard', targets: listTargetsWithLatestCheck(db) });
+    res.render('dashboard', {
+      title: 'Dashboard',
+      targets: listTargetsWithLatestCheck(db),
+      hasRecipients: hasRecipients(db),
+    });
   });
 
   router.post('/targets', async (req, res) => {

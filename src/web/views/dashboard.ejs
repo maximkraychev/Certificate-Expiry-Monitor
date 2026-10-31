@@ -1,6 +1,12 @@
 <%- include('partials/header') %>
 <h1>Dashboard</h1>
 
+<% if (!hasRecipients) { %>
+  <p class="hint" id="no-recipients">
+    Nobody gets alerts yet. <a href="/recipients">Add at least one recipient</a> so expiry warnings are emailed.
+  </p>
+<% } %>
+
 <section class="card">
   <h2>Add a target</h2>
   <form method="post" action="/targets" class="add-target">

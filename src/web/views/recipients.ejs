@@ -1,0 +1,45 @@
+<%- include('partials/header') %>
+<h1>Recipients</h1>
+
+<section class="card">
+  <h2>Add a recipient</h2>
+  <form method="post" action="/recipients" class="add-recipient">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="grow">
+      Email
+      <input type="email" name="email" placeholder="ops@example.com" autocomplete="off" spellcheck="false" required>
+    </label>
+    <button type="submit">Add</button>
+  </form>
+</section>
+
+<% if (recipients.length === 0) { %>
+  <p class="empty">No recipients yet. Alerts go to every address on this list, so add at least one.</p>
+<% } else { %>
+  <div class="table-wrap">
+    <table class="recipients">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Added</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (const recipient of recipients) { %>
+          <tr>
+            <td><%= recipient.email %></td>
+            <td><%= formatDateTime(recipient.createdAt) %></td>
+            <td class="actions">
+              <form method="post" action="/recipients/<%= recipient.id %>/delete">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="small danger">Remove</button>
+              </form>
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+<% } %>
+<%- include('partials/footer') %>

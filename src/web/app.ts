@@ -10,6 +10,7 @@ import { renderNotFound } from './errors';
 import { viewHelpers } from './format';
 import { requireAuth } from './middleware/requireAuth';
 import { authRoutes } from './routes/auth';
+import { recipientRoutes } from './routes/recipients';
 import { targetRoutes } from './routes/targets';
 import { createSessionStore, takeFlash } from './session';
 
@@ -75,6 +76,7 @@ export function createApp({ db, config, deps, clearExpiredSessions = true }: Cre
 
   app.use(requireAuth);
   app.use(targetRoutes(db, deps));
+  app.use(recipientRoutes(db, deps));
 
   app.use((_req, res) => {
     renderNotFound(res);

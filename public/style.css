@@ -139,15 +139,26 @@ main > h2 {
   margin-top: 2rem;
 }
 
-.add-target {
+.add-target,
+.add-recipient {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 1rem;
 }
 
-.add-target .grow {
+.add-target .grow,
+.add-recipient .grow {
   flex: 1 1 16rem;
+}
+
+.hint {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--warning);
+  border-radius: 6px;
+  margin: 0 0 1rem;
+  background: var(--card);
 }
 
 .add-target input[type="number"] {

@@ -95,7 +95,7 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
   - Tests (supertest, fake fetcher): add, then it's listed; check now adds a history row and sends no mail (the fake mailer isn't called); delete works; view or delete of an unknown id is 404; every POST without CSRF gets 403; validation error shows a flash.
 
 ### Step 5: Recipients
-- [ ] **5.1 Recipients page**
+- [x] **5.1 Recipients page**
   - `src/db/repositories/recipients.ts` and `src/services/recipients.ts`: `list`, `add` (trim, lowercase, simple email check, friendly error for duplicates), `remove`.
   - Routes: `GET /recipients`, `POST /recipients`, `POST /recipients/:id/delete` (404 for an unknown id). Add a nav link.
   - The dashboard shows a hint linking to /recipients while the list is empty.
@@ -138,3 +138,4 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
 - 4.1: `checkTarget` returns `undefined` for an unknown id, and also when the target was deleted mid-fetch (route → 404). `getHistory` returns newest first, capped at `HISTORY_LIMIT = 100`. Services take a `{ now }` / `{ fetchCertificate, now }` deps object, and `AppDeps` already satisfies both.
 - 4.2: `AppDeps` has no `sendMail` yet, so `createFakeDeps()` returns an extra `sendMail` `vi.fn` outside the `satisfies AppDeps` check. The "check now sends no mail" test only becomes a real guard once 6.x adds `sendMail` to `AppDeps` and passes it through. Swap the fake's loose `(to, message: unknown)` signature for the real one then.
 - 4.2: View helpers (`formatDateTime`, `formatDate`, `formatHostPort`, `statusClass`, `untrustedLabel`) live in `web/format.ts` and are installed on `app.locals`, so every view can use them. `untrustedLabel` maps Node's codes to short reasons (`untrusted (self-signed)`). `paramId(req)` in `web/request.ts` accepts positive integers only, and `renderNotFound(res)` in `web/errors.ts` is the shared 404, for 5.1's `/recipients/:id/delete`. The Check now form posts a hidden `from=details` to return to the details page; any other value goes back to `/`.
+- 5.1: `services/recipients.ts` exports `parseEmail`, `addRecipient(db, rawEmail, { now })` (same `{ ok, recipient } | { ok: false, error }` shape as `addTarget`), `removeRecipient` (returns the removed `Recipient` or undefined, for the flash), `listRecipients` (ordered by email) and `hasRecipients`. 6.1 should get its send list from `listRecipients`. The dashboard view now needs a `hasRecipients` local, which `GET /` passes.
