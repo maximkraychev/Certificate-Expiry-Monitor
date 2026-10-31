@@ -3,6 +3,9 @@ export type Status = 'OK' | 'WARNING' | 'CRITICAL' | 'EXPIRED' | 'ERROR';
 /** The statuses that come from certificate dates. ERROR (connect/parse failure) has no place in the severity order. */
 export type DateStatus = Exclude<Status, 'ERROR'>;
 
+/** The values `targets.last_notified_status` can hold besides NULL (decision 6 never stores OK or ERROR). */
+export type NotifiedStatus = Exclude<DateStatus, 'OK'>;
+
 export const STATUSES: readonly Status[] = ['OK', 'WARNING', 'CRITICAL', 'EXPIRED', 'ERROR'];
 
 /** At or below this many days left, a certificate is WARNING. */
