@@ -56,7 +56,7 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
 - [x] **2.1 Status calculation (pure)**
   - `src/core/status.ts`: `Status` type, threshold constants, `SEVERITY` order, `calculateDaysLeft(validTo, now)`, `calculateStatus(daysLeft)`.
   - Tests: boundaries 31→OK, 30→WARNING, 8→WARNING, 7→CRITICAL, 0→CRITICAL, −1→EXPIRED, plus daysLeft rounding just before and after a full day.
-- [ ] **2.2 TLS certificate fetcher**
+- [x] **2.2 TLS certificate fetcher**
   - `src/core/certFetcher.ts`: `fetchCertificate(host, port = 443, { timeoutMs, now })` returns `Promise<CertCheck>`. The `CertCheck` type covers: status, daysLeft, subject, issuer, sans[], validFrom, validTo, authorized, authorizationError, error.
   - Use `tls.connect` with `rejectUnauthorized: false` and SNI per decision 2. Read `getPeerCertificate()` on `secureConnect`. Parse SANs out of the `subjectaltname` string. Always destroy the socket.
   - Never throw. A connect error, timeout, or empty certificate returns `status: 'ERROR'` with a message.
@@ -129,3 +129,4 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
 - 1.2: The `Database` type comes from `src/db/connection.ts`. `tests/helpers.ts` already exists with `createTestDb()` (in-memory DB, migrated), so 3.1 should add to it, not replace it. `runMigrations(db, dir?)` takes an optional folder (the tests use it) and returns the new version.
 - 1.2: The `created_at` / `checked_at` / `sent_at` columns default to the current time in `toISOString()` format, but repositories should still pass `deps.now()` explicitly so tests can control the clock. `targets.last_notified_status` has a CHECK that allows only NULL, WARNING, CRITICAL or EXPIRED (decision 6 never stores OK or ERROR). `index.ts` resolves a relative `DATABASE_PATH` against the project root.
 - 2.1: `calculateStatus` returns `DateStatus` (`Status` minus ERROR), and `SEVERITY` is a `Record<DateStatus, number>`, so ERROR can't be compared by accident. Both functions throw `RangeError` on an invalid date or non-finite daysLeft instead of falling through to OK. The fetcher (2.2) must catch that and return ERROR. `calculateDaysLeft` takes `Date`s, so parse `valid_to` first.
+- 2.2: `selfsigned` 5 is async-only and takes `notBeforeDate`/`notAfterDate`, so `node-forge` wasn't needed. `authorizationError` holds Node's code (`DEPTH_ZERO_SELF_SIGNED_CERT`, `ERR_TLS_CERT_ALTNAME_INVALID`), not a sentence, so the UI should map or show it as is. The hostname check still runs with `rejectUnauthorized: false`, which is why wrong.host comes back `authorized: false`. `now` is a function (`() => Date`), and `FetchCertificate` is exported as the type for `deps`. `sans` holds values only (no `DNS:` prefix).
