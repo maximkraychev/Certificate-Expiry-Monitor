@@ -45,7 +45,7 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
   - `src/config.ts`: `loadConfig(env = process.env)` returns a typed config and throws a clear error naming the missing variable when `ADMIN_USERNAME`, `ADMIN_PASSWORD` or `SESSION_SECRET` is absent. `src/index.ts` calls `process.loadEnvFile()` (only if `.env` exists) before `loadConfig`.
   - Tests: `tests/config.test.ts` (missing vars throw; defaults for PORT and DATABASE_PATH).
   - Done when: `npm test` and `npm run typecheck` pass, and `npm start` without `.env` exits with the missing-variable error.
-- [ ] **1.2 Database + migrations**
+- [x] **1.2 Database + migrations**
   - `src/db/connection.ts`: `openDatabase(path)` creates the parent directory, sets `PRAGMA foreign_keys = ON`, and sets `journal_mode = WAL` for file databases.
   - `src/db/migrate.ts`: `runMigrations(db)` applies every `src/db/migrations/NNN_*.sql` file whose number is greater than `PRAGMA user_version`, one transaction per file, then bumps `user_version`.
   - `001_init.sql`: the 4 tables from the spec plus decision 3. Constraints: `UNIQUE(email)`, `UNIQUE(host, port)`, `check_results.target_id REFERENCES targets(id) ON DELETE CASCADE`, `CHECK(status IN (...))`, and an index on `check_results(target_id, checked_at DESC)`.
@@ -126,3 +126,5 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
 (Sessions add short handover notes here.)
 - 1.1: better-sqlite3 13 ships N-API prebuilds (incl. win32-x64) and loads on Node 26 with no native build. npm 11 warns its `node-gyp` install script isn't in `allowScripts`. That's harmless. Versions are newer than you might expect: TypeScript 7, Vitest 5, ejs 7, nodemailer 10, node-cron 4 (ships its own types, so there's no `@types/node-cron`).
 - 1.1: tsconfig sets `"types": ["node"]` explicitly (newer TS defaults `types` to `[]`) and `verbatimModuleSyntax`, so use `import type` / `type` modifiers for type-only imports. `config.isProduction` (from `NODE_ENV`) is there for the secure cookie in decision 10. `.gitignore` already had `.env.*`, so I added `!.env.example`.
+- 1.2: The `Database` type comes from `src/db/connection.ts`. `tests/helpers.ts` already exists with `createTestDb()` (in-memory DB, migrated), so 3.1 should add to it, not replace it. `runMigrations(db, dir?)` takes an optional folder (the tests use it) and returns the new version.
+- 1.2: The `created_at` / `checked_at` / `sent_at` columns default to the current time in `toISOString()` format, but repositories should still pass `deps.now()` explicitly so tests can control the clock. `targets.last_notified_status` has a CHECK that allows only NULL, WARNING, CRITICAL or EXPIRED (decision 6 never stores OK or ERROR). `index.ts` resolves a relative `DATABASE_PATH` against the project root.
