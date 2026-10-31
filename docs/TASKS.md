@@ -38,7 +38,7 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
 ## Steps and tasks
 
 ### Step 1: Project setup + migrations
-- [ ] **1.1 Scaffold the project**
+- [x] **1.1 Scaffold the project**
   - Create `package.json` (engines `node >=20.12`), `tsconfig.json`, `vitest.config.ts`, `.env.example` (all spec keys, with sample values `DATABASE_PATH=./data/certs.db` and `PORT=3000`), the empty `src/{core,db,services,web,scheduler,mail}` folders, and add `data/` to `.gitignore`.
   - Install the runtime deps (express@5, ejs, express-session, better-sqlite3, better-sqlite3-session-store, csrf-sync, helmet, node-cron, nodemailer) and the dev deps (typescript, tsx, vitest, supertest, selfsigned, plus the @types packages).
   - **Check that `better-sqlite3` loads on Node 26** (`node -e "new (require('better-sqlite3'))(':memory:')"`). If there's no prebuilt binary and the native build fails, **stop and ask the user**. Options: install VS Build Tools, or switch to Node 22/24 LTS.
@@ -124,3 +124,5 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
 
 ## Notes
 (Sessions add short handover notes here.)
+- 1.1: better-sqlite3 13 ships N-API prebuilds (incl. win32-x64) and loads on Node 26 with no native build. npm 11 warns its `node-gyp` install script isn't in `allowScripts`. That's harmless. Versions are newer than you might expect: TypeScript 7, Vitest 5, ejs 7, nodemailer 10, node-cron 4 (ships its own types, so there's no `@types/node-cron`).
+- 1.1: tsconfig sets `"types": ["node"]` explicitly (newer TS defaults `types` to `[]`) and `verbatimModuleSyntax`, so use `import type` / `type` modifiers for type-only imports. `config.isProduction` (from `NODE_ENV`) is there for the secure cookie in decision 10. `.gitignore` already had `.env.*`, so I added `!.env.example`.
