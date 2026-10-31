@@ -48,12 +48,11 @@ export function okCertCheck(overrides: Partial<CertCheck> = {}): CertCheck {
 
 /** Deps with no network and a fixed clock. Each fake is a `vi.fn` so tests can inspect or override it. */
 export function createFakeDeps() {
-  const deps = {
+  return {
     fetchCertificate: vi.fn<AppDeps['fetchCertificate']>(async () => okCertCheck()),
+    sendMail: vi.fn<SendMail>(async () => {}),
     now: vi.fn(() => new Date(TEST_NOW)),
   } satisfies AppDeps;
-  // AppDeps gets sendMail in 6.2. The fake is here already so route tests can assert that nothing sends mail.
-  return { ...deps, sendMail: vi.fn<SendMail>(async () => {}) };
 }
 
 export function createTestApp(configOverrides: Partial<Config> = {}) {

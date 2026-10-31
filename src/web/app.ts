@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import type { Config } from '../config';
 import type { FetchCertificate } from '../core/certFetcher';
 import type { Database } from '../db/connection';
+import type { SendMail } from '../mail/digest';
 import { renderNotFound } from './errors';
 import { viewHelpers } from './format';
 import { requireAuth } from './middleware/requireAuth';
@@ -16,6 +17,8 @@ import { createSessionStore, takeFlash } from './session';
 
 export interface AppDeps {
   fetchCertificate: FetchCertificate;
+  /** No route sends mail ("Check now" never does). It is here so tests can prove that. */
+  sendMail: SendMail;
   now: () => Date;
 }
 
