@@ -10,6 +10,41 @@ function sessionCookie(res: request.Response): string | undefined {
   return cookies.find((cookie) => cookie.startsWith('connect.sid='));
 }
 
+describe('in production', () => {
+  let app: App;
+  let db: Database;
+
+  beforeEach(() => {
+    ({ app, db } = createTestApp({ isProduction: true }));
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('can log in through an HTTPS reverse proxy, with a secure cookie', async () => {
+    const page = await request(app).get('/login').set('X-Forwarded-Proto', 'https');
+    const cookie = sessionCookie(page);
+    expect(cookie).toContain('Secure');
+
+    const _csrf = /name="_csrf" value="([^"]+)"/.exec(page.text)![1];
+    const login = await request(app)
+      .post('/login')
+      .set('X-Forwarded-Proto', 'https')
+      .set('Cookie', cookie!.split(';')[0])
+      .type('form')
+      .send({ _csrf, username: TEST_USERNAME, password: TEST_PASSWORD });
+
+    expect(login.status).toBe(302);
+    expect(login.headers.location).toBe('/');
+  });
+
+  it('sets no session cookie over plain http', async () => {
+    const page = await request(app).get('/login');
+    expect(sessionCookie(page)).toBeUndefined();
+  });
+});
+
 describe('login / logout', () => {
   let app: App;
   let db: Database;

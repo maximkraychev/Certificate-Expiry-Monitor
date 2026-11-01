@@ -8,13 +8,13 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
 - Don't start the next task and don't commit unless asked.
 
 ## Conventions
-- **Modules:** ESM (`"type": "module"`), TypeScript `strict`, `moduleResolution: "Bundler"`, `noEmit`. Run with `tsx` in dev and in prod (no build step). Imports have no file extension. Resolve paths with `import.meta.dirname`.
+- **Modules:** ESM (`"type": "module"`), TypeScript `strict`, `moduleResolution: "Bundler"`, `noEmit`. Run with `tsx` in dev; `npm run build` bundles a release with esbuild. Imports have no file extension. Folders the app reads at runtime are resolved in `src/paths.ts`, which works from source and from the bundle.
 - **Style:** plain functions, no classes or DI containers. Repositories and services are functions that take `db: Database` as their first argument. Side-effecting dependencies (cert fetcher, mail sender, clock) come in through a `deps` parameter so tests can swap in fakes.
 - **Layers:** `core/` is pure (no DB, no Express). Route handlers in `web/` only parse input, call a service, and render or redirect.
 - **Time:** store ISO-8601 UTC strings (`new Date().toISOString()`). Display them in `Europe/Sofia` through one helper (`web/format.ts`, using `Intl.DateTimeFormat`).
 - **App factory:** `createApp({ db, config, deps })` returns the Express app without listening. `src/index.ts` is the only place that opens the real DB, listens, and starts cron.
 - **Tests:** Vitest, with `tests/` mirroring `src/`. Use an in-memory DB (`:memory:`) with migrations applied. No real network or SMTP in the default run. The badssl tests run only when `RUN_NETWORK_TESTS=1`.
-- **Scripts:** `dev` (`tsx watch src/index.ts`), `start` (`tsx src/index.ts`), `test` (`vitest run`), `typecheck` (`tsc --noEmit`).
+- **Scripts:** `dev` (`tsx watch src/index.ts`), `start` (`tsx src/index.ts`), `build` (`tsx scripts/build.ts`), `test` (`vitest run`), `typecheck` (`tsc --noEmit`).
 
 ## Decisions (already made; don't revisit)
 1. `daysLeft = Math.floor((validTo - now) / 86_400_000)`. Status rules: `< 0` EXPIRED, `≤ 7` CRITICAL, `≤ 30` WARNING, otherwise OK. This puts day 0 in CRITICAL. The thresholds are exported constants in `core/status.ts`.
@@ -30,7 +30,7 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
    - Better than last but not OK (cert renewed with a short lifetime): silently lower `last_notified_status` to the current status, so a later escalation alerts again.
 7. `last_notified_status` is written only after **at least one** recipient email succeeds. With no recipients, or when every send fails, nothing is updated, so the next run tries again.
 8. Every scheduler run writes one `notifications` row. `recipients_count` is the number of successful sends. `summary` is a short text: the triggered targets, or "nothing triggered", or "no recipients", plus any failed addresses.
-9. Mail: when `SMTP_HOST` is empty, use an Ethereal test account and log each message's preview URL.
+9. Mail: when `SMTP_HOST` is empty, use an Ethereal test account and log each message's preview URL. This is for development only: a built release or `NODE_ENV=production` refuses to start without `SMTP_HOST`.
 10. Sessions live in the same SQLite DB (`better-sqlite3-session-store`). In tests, set `expired.clear: false` so no timer is left open. Session cookie: `httpOnly`, `sameSite: 'lax'`, `secure` in production. Call `req.session.regenerate` on login.
 11. CSRF: `csrf-sync`, token taken from the `_csrf` body field, and every form includes it. An invalid token gets a 403 error page.
 12. Every redirect after a POST carries one session-based flash message (`req.session.flash`).
@@ -122,6 +122,12 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
   - Tests: the scheduler registers the right expression and timezone (mock `node-cron`), and the overlap guard works.
   - Manual check: a one-off scratch script runs `runNotificationJob` against the dev DB with Ethereal and prints the preview URL.
 
+### Step 7: Release bundle
+- [x] **7.1 Ready-to-run release folder**
+  - `npm run build` (`scripts/build.ts`) writes `release/cert-monitor/`: `server.mjs` (esbuild bundle), `.env` (copy of `.env.example`), `views/`, `migrations/`, `public/`, `README.md` (from `scripts/release-README.md`) and `node_modules/better-sqlite3`. Started with `node server.mjs`.
+  - A release or `NODE_ENV=production` refuses to start with sample credentials or an empty `SMTP_HOST` (`assertReadyForDeployment`). Production trusts one reverse proxy, so login works behind HTTPS.
+  - Tests: `tests/scripts/build.test.ts` builds and runs a real release; `tests/config.test.ts` and `tests/web/auth.test.ts` cover the checks and proxy login.
+
 ## Notes
 (Sessions add short handover notes here.)
 - 1.1: better-sqlite3 13 ships N-API prebuilds (incl. win32-x64) and loads on Node 26 with no native build. npm 11 warns its `node-gyp` install script isn't in `allowScripts`. That's harmless. Versions are newer than you might expect: TypeScript 7, Vitest 5, ejs 7, nodemailer 10, node-cron 4 (ships its own types, so there's no `@types/node-cron`).
@@ -145,3 +151,4 @@ Full spec: [SPEC.md](SPEC.md). Each task below runs in its own fresh session.
 - 6.2: On Windows, `timeout`/`kill` don't deliver SIGTERM to node, so the shutdown path was checked by `process.emit('SIGTERM')` in a wrapper script (exit 0). Both dev DBs in `data/` were empty, so the manual Ethereal run used a copy of `data/certificates.db` seeded with expired. and self-signed.badssl.com and two dummy recipients. Two preview URLs printed, and expired. became `EXPIRED`.
 - UI redesign (after 6.2): The dashboard sorts with `sortByUrgency` and leads with `dashboardSummary` (`web/format.ts`). The "runway" is `partials/runway.ejs` plus `partials/runway-axis.ejs`, positioned by `runwayPosition` and `runwayScale`, so change its stops only in `format.ts`. Colour means status only: add new colours as `--name`, `--name-text`, `--name-tint` tokens, with values for both light and dark. `public/app.js` shows the busy state on any button with `data-busy`. The font is self-hosted in `public/fonts/` (OFL licence alongside).
 - Theme + confirm popup: Colour tokens use `light-dark()`, so each is defined once. `public/theme.js` (blocking, before the stylesheet) applies the saved theme as `data-theme` on `<html>`, and the toggle lives in `public/app.js`. Any form with `data-confirm-title`, `data-confirm-body` and `data-confirm-action` opens the shared `partials/confirm-dialog.ejs` before submitting. This is client-side only: the server routes do not require confirmation, and without JavaScript the form submits directly.
+- 7.1: This replaces the old "no build step" convention for releases only; dev and tests still use `tsx`. Anything read from disk at runtime must be added to both `src/paths.ts` and `scripts/build.ts`, and a dependency that loads modules dynamically can pass the source tests yet fail in the bundle (Express's `require('ejs')` did), which is why the build test runs the real output. `better-sqlite3` declares Node >=22, so `engines` moved up from 20.12. It also has a `binding.gyp`, so a plain `npm install` tries to compile it and fails without a C++ toolchain; use `--ignore-scripts`. The Linux and macOS binaries in the release have not been run.

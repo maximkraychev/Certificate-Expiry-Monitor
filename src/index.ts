@@ -1,10 +1,11 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { loadConfig, type Config } from './config';
+import { assertReadyForDeployment, loadConfig, type Config } from './config';
 import { fetchCertificate } from './core/certFetcher';
 import { openDatabase } from './db/connection';
 import { runMigrations } from './db/migrate';
 import { createMailer } from './mail/transport';
+import { IS_BUNDLED, PROJECT_ROOT } from './paths';
 import { startScheduler } from './scheduler';
 import { runNotificationJob } from './services/notifications';
 import { createApp } from './web/app';
@@ -12,8 +13,7 @@ import { createApp } from './web/app';
 /** How long a shutdown may wait for a running job and open connections before the process just exits. */
 const SHUTDOWN_TIMEOUT_MS = 30_000;
 
-const projectRoot = path.join(import.meta.dirname, '..');
-const envFile = path.join(projectRoot, '.env');
+const envFile = path.join(PROJECT_ROOT, '.env');
 if (existsSync(envFile)) {
   process.loadEnvFile(envFile);
 }
@@ -21,13 +21,20 @@ if (existsSync(envFile)) {
 let config: Config;
 try {
   config = loadConfig();
+  if (config.isProduction || IS_BUNDLED) {
+    assertReadyForDeployment(config);
+  }
 } catch (err) {
   console.error((err as Error).message);
   process.exit(1);
 }
 
+if (config.isProduction) {
+  console.log('NODE_ENV=production: serve this through an HTTPS reverse proxy. Over plain HTTP, login will not work.');
+}
+
 // A relative DATABASE_PATH is relative to the project root, not the current directory.
-const databasePath = path.resolve(projectRoot, config.databasePath);
+const databasePath = path.resolve(PROJECT_ROOT, config.databasePath);
 const db = openDatabase(databasePath);
 const schemaVersion = runMigrations(db);
 console.log(`Database ready: ${databasePath} (schema version ${schemaVersion})`);

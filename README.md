@@ -6,18 +6,28 @@ Server-rendered Express + EJS, SQLite storage, a daily cron job, and Nodemailer 
 
 ## Requirements
 
-- Node.js 20.12 or newer
-- No build step: TypeScript runs directly with `tsx`
+- Node.js 22 or newer
+- In development, TypeScript runs directly with `tsx`
 
 ## Setup
 
 ```sh
-npm install
+npm install --ignore-scripts
 cp .env.example .env   # then edit it
 npm run dev            # http://localhost:3000
 ```
 
+`--ignore-scripts` stops npm from compiling `better-sqlite3`, which ships prebuilt binaries and would otherwise need a C++ toolchain.
+
 Sign in with `ADMIN_USERNAME` / `ADMIN_PASSWORD`. Add the hosts to monitor on the dashboard, and the people to alert on the **Recipients** page.
+
+## Building a release
+
+`npm run build` writes a ready-to-run copy of the app to `release/cert-monitor/`, about 19 MB. Zip that folder and hand it over. Whoever receives it needs only Node.js 22 or newer: they edit `.env` and run `node server.mjs`. The folder has its own `README.md` covering HTTPS, backups and upgrades.
+
+- Each build replaces `release/cert-monitor/`, so don't run the app from there with data you want to keep.
+- The release's `.env` is a copy of `.env.example`, never your local `.env`.
+- It includes SQLite binaries for Linux, macOS and Windows, so one folder works on any of them.
 
 ## Configuration (`.env`)
 
@@ -33,7 +43,11 @@ Sign in with `ADMIN_USERNAME` / `ADMIN_PASSWORD`. Add the hosts to monitor on th
 | `SMTP_USER`, `SMTP_PASS` | | | SMTP login. Leave the user empty for a server without auth. |
 | `MAIL_FROM` | | `Cert Monitor <certs@localhost>` | Sender of the digest |
 
-The app won't start if `ADMIN_USERNAME`, `ADMIN_PASSWORD` or `SESSION_SECRET` is missing. Set `NODE_ENV=production` when serving over HTTPS, so the session cookie is marked `secure`.
+The app won't start if `ADMIN_USERNAME`, `ADMIN_PASSWORD` or `SESSION_SECRET` is missing.
+
+A built release, or any run with `NODE_ENV=production`, also refuses to start if `ADMIN_PASSWORD` or `SESSION_SECRET` still has its `.env.example` value, or if `SMTP_HOST` is empty. It lists everything to fix.
+
+**HTTPS.** The app serves plain HTTP. To use HTTPS, put one reverse proxy in front of it that sends `X-Forwarded-Proto: https`, and set `NODE_ENV=production` so the session cookie is marked `secure`. Leave `NODE_ENV` unset when serving plain HTTP, because login doesn't work over plain HTTP in production mode.
 
 **Ethereal for development.** With `SMTP_HOST` empty, the first email creates a throwaway Ethereal account. Nothing is delivered. Each message's preview URL is printed to the console instead (`Ethereal preview for …: https://ethereal.email/message/…`).
 
@@ -43,6 +57,7 @@ The app won't start if `ADMIN_USERNAME`, `ADMIN_PASSWORD` or `SESSION_SECRET` is
 | --- | --- |
 | `npm run dev` | Start and restart on file changes |
 | `npm start` | Start |
+| `npm run build` | Build the release folder |
 | `npm test` | Run the tests (no network, no SMTP) |
 | `RUN_NETWORK_TESTS=1 npm test` | Also run the live checks against badssl.com |
 | `npm run typecheck` | `tsc --noEmit` |

@@ -1,5 +1,5 @@
-import path from 'node:path';
 import { csrfSync } from 'csrf-sync';
+import ejs from 'ejs';
 import express, { type ErrorRequestHandler, type Express } from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
@@ -7,6 +7,7 @@ import type { Config } from '../config';
 import type { FetchCertificate } from '../core/certFetcher';
 import type { Database } from '../db/connection';
 import type { SendMail } from '../mail/digest';
+import { PUBLIC_DIR, VIEWS_DIR } from '../paths';
 import { renderNotFound } from './errors';
 import { viewHelpers } from './format';
 import { requireAuth } from './middleware/requireAuth';
@@ -30,12 +31,14 @@ export interface CreateAppOptions {
   clearExpiredSessions?: boolean;
 }
 
-const PUBLIC_DIR = path.join(import.meta.dirname, '..', '..', 'public');
-const VIEWS_DIR = path.join(import.meta.dirname, 'views');
-
 export function createApp({ db, config, deps, clearExpiredSessions = true }: CreateAppOptions): Express {
   const app = express();
+  // In production the app sits behind one HTTPS reverse proxy. Without this, Express sees plain http and
+  // express-session withholds the secure cookie, so nobody can log in.
+  app.set('trust proxy', config.isProduction ? 1 : false);
   app.set('views', VIEWS_DIR);
+  // Registered explicitly because Express would otherwise require('ejs') at runtime, which fails in the bundle.
+  app.engine('ejs', ejs.renderFile);
   app.set('view engine', 'ejs');
   Object.assign(app.locals, viewHelpers);
 

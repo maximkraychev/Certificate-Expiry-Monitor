@@ -150,4 +150,7 @@ vite.config.ts.timestamp-*
 
 # App data (SQLite database)
 data/
+
+# Built release (npm run build)
+release/
 !.env.example

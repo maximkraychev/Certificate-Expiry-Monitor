@@ -21,6 +21,9 @@ export const DEFAULT_DATABASE_PATH = './data/certs.db';
 export const DEFAULT_SMTP_PORT = 587;
 export const DEFAULT_MAIL_FROM = 'Cert Monitor <certs@localhost>';
 
+/** The sample values in `.env.example`. */
+export const SAMPLE_SESSION_SECRET = 'change-me-to-a-long-random-string';
+
 const REQUIRED_VARS = ['ADMIN_USERNAME', 'ADMIN_PASSWORD', 'SESSION_SECRET'] as const;
 
 type Env = Record<string, string | undefined>;
@@ -46,6 +49,21 @@ export function loadConfig(env: Env = process.env): Config {
     mailFrom: valueOr(env.MAIL_FROM, DEFAULT_MAIL_FROM),
     isProduction: env.NODE_ENV === 'production',
   };
+}
+
+/** Throws, listing every problem, when a real deployment would be unsafe or would never deliver an alert. */
+export function assertReadyForDeployment(config: Config): void {
+  const problems: string[] = [];
+
+  if (config.sessionSecret === SAMPLE_SESSION_SECRET) {
+    problems.push('SESSION_SECRET is still the sample value');
+  }
+  if (config.smtp.host === '') {
+    problems.push('SMTP_HOST is empty, so alert emails would never be delivered');
+  }
+  if (problems.length > 0) {
+    throw new Error(`Not ready to run. Fix these in .env:\n${problems.map((problem) => `  - ${problem}`).join('\n')}`);
+  }
 }
 
 function valueOr(value: string | undefined, fallback: string): string {

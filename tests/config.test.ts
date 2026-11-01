@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_DATABASE_PATH, DEFAULT_PORT, loadConfig } from '../src/config';
+import {
+  assertReadyForDeployment,
+  DEFAULT_DATABASE_PATH,
+  DEFAULT_PORT,
+  loadConfig,
+  SAMPLE_ADMIN_PASSWORD,
+  SAMPLE_SESSION_SECRET,
+} from '../src/config';
 
 const required = {
   ADMIN_USERNAME: 'admin',
@@ -60,5 +67,30 @@ describe('loadConfig', () => {
 
   it.each(['abc', '0', '70000', '3.5'])('rejects invalid PORT %s', (port) => {
     expect(() => loadConfig({ ...required, PORT: port })).toThrow(/Invalid PORT/);
+  });
+});
+
+describe('assertReadyForDeployment', () => {
+  const ready = { ...required, SMTP_HOST: 'smtp.example.com' };
+
+  it('accepts real values', () => {
+    expect(() => assertReadyForDeployment(loadConfig(ready))).not.toThrow();
+  });
+
+  it.each([
+    ['ADMIN_PASSWORD', { ...ready, ADMIN_PASSWORD: SAMPLE_ADMIN_PASSWORD }],
+    ['SESSION_SECRET', { ...ready, SESSION_SECRET: SAMPLE_SESSION_SECRET }],
+    ['SMTP_HOST', { ...ready, SMTP_HOST: '' }],
+  ])('rejects a bad %s', (name, env) => {
+    expect(() => assertReadyForDeployment(loadConfig(env))).toThrow(name);
+  });
+
+  it('lists every problem at once', () => {
+    const config = loadConfig({
+      ADMIN_USERNAME: 'admin',
+      ADMIN_PASSWORD: SAMPLE_ADMIN_PASSWORD,
+      SESSION_SECRET: SAMPLE_SESSION_SECRET,
+    });
+    expect(() => assertReadyForDeployment(config)).toThrow(/ADMIN_PASSWORD[\s\S]*SESSION_SECRET[\s\S]*SMTP_HOST/);
   });
 });

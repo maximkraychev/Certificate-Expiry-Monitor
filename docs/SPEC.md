@@ -3,7 +3,7 @@
 A small single-user web app that monitors TLS certificates of websites/servers and emails a list of recipients when certificates approach expiry. There is exactly one login, configured in `.env` (username + password). Server-side rendered, no SPA, no REST API, no CLI.
 
 ## Tech stack
-- Node.js 20+, TypeScript (use `tsx` for dev)
+- Node.js 22+, TypeScript (use `tsx` for dev; releases are bundled with esbuild)
 - Express + EJS templates (server-side rendering)
 - Plain CSS (single `public/style.css`, no CSS frameworks)
 - SQLite via `better-sqlite3`

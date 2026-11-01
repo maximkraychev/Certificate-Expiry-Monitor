@@ -1,8 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { MIGRATIONS_DIR } from '../paths';
 import type { Database } from './connection';
-
-export const MIGRATIONS_DIR = path.join(import.meta.dirname, 'migrations');
 
 export interface Migration {
   version: number;

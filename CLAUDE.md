@@ -1,7 +1,7 @@
 # Certificate Expiry Monitor
 
 Single-user Express + EJS app that watches TLS certificate expiry and emails a daily digest.
-Stack: Node 20+, TypeScript (run with `tsx`, no build), Express 5, EJS, SQLite (`better-sqlite3`), `node-cron`, Nodemailer, Vitest + supertest.
+Stack: Node 22+, TypeScript (run with `tsx`; releases are bundled with esbuild), Express 5, EJS, SQLite (`better-sqlite3`), `node-cron`, Nodemailer, Vitest + supertest.
 
 ## Before doing anything
 - `docs/SPEC.md` is the source of truth for requirements.
@@ -12,6 +12,7 @@ Stack: Node 20+, TypeScript (run with `tsx`, no build), Express 5, EJS, SQLite (
 ## Commands
 - `npm run dev`: start with reload
 - `npm start`: start
+- `npm run build`: build the ready-to-run folder in `release/cert-monitor/`
 - `npm test`: Vitest (set `RUN_NETWORK_TESTS=1` to include the badssl.com tests)
 - `npm run typecheck`: `tsc --noEmit`
 
