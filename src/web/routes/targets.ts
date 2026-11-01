@@ -3,8 +3,16 @@ import type { Database } from '../../db/connection';
 import type { CheckResult } from '../../db/repositories/checkResults';
 import { checkTarget, getHistory, type CheckDeps } from '../../services/checks';
 import { hasRecipients } from '../../services/recipients';
-import { addTarget, deleteTarget, formatHostPort, getTarget, listTargetsWithLatestCheck } from '../../services/targets';
+import {
+  addTarget,
+  deleteTarget,
+  formatHostPort,
+  getTarget,
+  listTargetsWithLatestCheck,
+  sortByUrgency,
+} from '../../services/targets';
 import { renderNotFound } from '../errors';
+import { dashboardSummary } from '../format';
 import { bodyString, paramId } from '../request';
 import { setFlash } from '../session';
 
@@ -12,9 +20,11 @@ export function targetRoutes(db: Database, deps: CheckDeps): Router {
   const router = Router();
 
   router.get('/', (_req, res) => {
+    const targets = sortByUrgency(listTargetsWithLatestCheck(db));
     res.render('dashboard', {
       title: 'Dashboard',
-      targets: listTargetsWithLatestCheck(db),
+      targets,
+      summary: dashboardSummary(targets),
       hasRecipients: hasRecipients(db),
     });
   });
@@ -30,7 +40,11 @@ export function targetRoutes(db: Database, deps: CheckDeps): Router {
     // The first check runs right away so the new row isn't blank (decision 4).
     const check = await checkTarget(db, added.target.id, deps);
     const name = formatHostPort(added.target);
-    setFlash(req, 'success', check ? `Added ${name}. ${describeCheck(check)}` : `Added ${name}.`);
+    setFlash(
+      req,
+      check?.status === 'ERROR' ? 'error' : 'success',
+      check ? `Added ${name}. ${describeCheck(check)}` : `Added ${name}.`,
+    );
     res.redirect('/');
   });
 

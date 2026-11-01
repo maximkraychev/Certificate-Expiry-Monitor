@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import type { Status } from '../../src/core/status';
 import type { Database } from '../../src/db/connection';
 import { insertCheckResult } from '../../src/db/repositories/checkResults';
+import type { TargetWithLatestCheck } from '../../src/db/repositories/targets';
 import {
   addTarget,
   deleteTarget,
@@ -8,6 +10,7 @@ import {
   getTarget,
   listTargetsWithLatestCheck,
   parseTargetInput,
+  sortByUrgency,
 } from '../../src/services/targets';
 import { createTestDb, TEST_NOW } from '../helpers';
 
@@ -205,5 +208,54 @@ describe('target service', () => {
       authorized: false,
       authorizationError: 'DEPTH_ZERO_SELF_SIGNED_CERT',
     });
+  });
+});
+
+describe('sortByUrgency', () => {
+  function target(host: string, status: Status | null, daysLeft: number | null = null): TargetWithLatestCheck {
+    return {
+      id: 1,
+      host,
+      port: 443,
+      lastNotifiedStatus: null,
+      createdAt: TEST_NOW.toISOString(),
+      latestCheck:
+        status === null
+          ? null
+          : {
+              id: 1,
+              targetId: 1,
+              status,
+              daysLeft,
+              validTo: null,
+              error: null,
+              authorized: true,
+              authorizationError: null,
+              checkedAt: TEST_NOW.toISOString(),
+            },
+    };
+  }
+
+  it('puts known problems first, then failures, then healthy, then unchecked', () => {
+    const sorted = sortByUrgency([
+      target('never', null),
+      target('ok', 'OK', 80),
+      target('error', 'ERROR'),
+      target('warning', 'WARNING', 20),
+      target('critical', 'CRITICAL', 5),
+      target('expired', 'EXPIRED', -2),
+    ]);
+    expect(sorted.map((t) => t.host)).toEqual(['expired', 'critical', 'warning', 'error', 'ok', 'never']);
+  });
+
+  it('orders by days left within a status and keeps the order of ties', () => {
+    const sorted = sortByUrgency([target('b', 'OK', 80), target('later', 'OK', 90), target('a', 'OK', 80), target('soon', 'OK', 40)]);
+    expect(sorted.map((t) => t.host)).toEqual(['soon', 'b', 'a', 'later']);
+  });
+
+  it('does not change the list it was given', () => {
+    const list = [target('ok', 'OK', 80), target('expired', 'EXPIRED', -2)];
+    sortByUrgency(list);
+    expect(list.map((t) => t.host)).toEqual(['ok', 'expired']);
   });
 });

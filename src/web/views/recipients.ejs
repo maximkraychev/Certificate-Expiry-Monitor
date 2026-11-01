@@ -1,17 +1,22 @@
 <%- include('partials/header') %>
-<h1>Recipients</h1>
+<div class="page-head">
+  <div>
+    <h1>Recipients</h1>
+    <p class="lede">Every address here gets the digest email when a certificate needs attention.</p>
+  </div>
 
-<section class="card">
-  <h2>Add a recipient</h2>
-  <form method="post" action="/recipients" class="add-recipient">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <label class="grow">
-      Email
-      <input type="email" name="email" placeholder="ops@example.com" autocomplete="off" spellcheck="false" required>
-    </label>
-    <button type="submit">Add</button>
-  </form>
-</section>
+  <section class="panel">
+    <h2>Add a recipient</h2>
+    <form method="post" action="/recipients" class="stacked">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>
+        Email
+        <input type="email" name="email" placeholder="ops@example.com" autocomplete="off" spellcheck="false" required>
+      </label>
+      <button type="submit">Add recipient</button>
+    </form>
+  </section>
+</div>
 
 <% if (recipients.length === 0) { %>
   <p class="empty">No recipients yet. Alerts go to every address on this list, so add at least one.</p>
@@ -22,7 +27,7 @@
         <tr>
           <th>Email</th>
           <th>Added</th>
-          <th>Actions</th>
+          <th><span class="visually-hidden">Actions</span></th>
         </tr>
       </thead>
       <tbody>
@@ -30,7 +35,7 @@
           <tr>
             <td><%= recipient.email %></td>
             <td><%= formatDateTime(recipient.createdAt) %></td>
-            <td class="actions">
+            <td class="actions-cell">
               <form method="post" action="/recipients/<%= recipient.id %>/delete">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button type="submit" class="small danger">Remove</button>

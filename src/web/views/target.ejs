@@ -1,34 +1,52 @@
 <%- include('partials/header') %>
-<p><a href="/">&larr; Dashboard</a></p>
-<h1><%= formatHostPort(target) %></h1>
-
-<section class="card">
-  <dl class="details">
-    <dt>Status</dt>
-    <dd><%- include('partials/status', { check: latestCheck }) %></dd>
-    <dt>Days left</dt>
-    <dd><%= latestCheck?.daysLeft ?? '—' %></dd>
-    <dt>Expires</dt>
-    <dd><%= formatDateTime(latestCheck?.validTo ?? null) %></dd>
-    <dt>Last checked</dt>
-    <dd><%= latestCheck ? formatDateTime(latestCheck.checkedAt) : 'never' %></dd>
-    <dt>Last alert sent for</dt>
-    <dd><%= target.lastNotifiedStatus ?? 'nothing yet' %></dd>
-    <dt>Added</dt>
-    <dd><%= formatDateTime(target.createdAt) %></dd>
-  </dl>
+<a class="back-link" href="/">&larr; Dashboard</a>
+<div class="detail-head">
+  <div>
+    <h1><%= formatHostPort(target) %></h1>
+    <p class="lede"><%= describeExpiry(latestCheck) %></p>
+  </div>
   <div class="actions">
     <form method="post" action="/targets/<%= target.id %>/check">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <input type="hidden" name="from" value="details">
-      <button type="submit">Check now</button>
+      <button type="submit" data-busy="Checking…">Check now</button>
     </form>
     <form method="post" action="/targets/<%= target.id %>/delete">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <button type="submit" class="danger">Delete target</button>
     </form>
   </div>
-</section>
+</div>
+
+<% if (latestCheck && latestCheck.daysLeft !== null) { %>
+  <div class="detail-runway">
+    <%- include('partials/runway', { check: latestCheck }) %>
+    <%- include('partials/runway-axis') %>
+  </div>
+<% } %>
+
+<dl class="details">
+  <div>
+    <dt>Status</dt>
+    <dd><%- include('partials/status', { check: latestCheck }) %></dd>
+  </div>
+  <div>
+    <dt>Expires</dt>
+    <dd><%= formatDateTime(latestCheck?.validTo ?? null) %></dd>
+  </div>
+  <div>
+    <dt>Last checked</dt>
+    <dd><%= latestCheck ? formatDateTime(latestCheck.checkedAt) : 'never' %></dd>
+  </div>
+  <div>
+    <dt>Last alert sent for</dt>
+    <dd><%= target.lastNotifiedStatus ?? 'nothing yet' %></dd>
+  </div>
+  <div>
+    <dt>Added</dt>
+    <dd><%= formatDateTime(target.createdAt) %></dd>
+  </div>
+</dl>
 
 <h2>Check history</h2>
 <% if (history.length === 0) { %>

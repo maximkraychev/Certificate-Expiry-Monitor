@@ -4,15 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= title %> · Cert Monitor</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="/">Cert Monitor</a>
     <% if (isAuthenticated) { %>
       <nav>
-        <a href="/">Dashboard</a>
-        <a href="/recipients">Recipients</a>
+        <a href="/"<%- title === 'Dashboard' ? ' aria-current="page"' : '' %>>Dashboard</a>
+        <a href="/recipients"<%- title === 'Recipients' ? ' aria-current="page"' : '' %>>Recipients</a>
       </nav>
       <form class="logout" method="post" action="/logout">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">

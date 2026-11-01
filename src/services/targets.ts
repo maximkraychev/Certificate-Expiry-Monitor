@@ -1,6 +1,7 @@
 import net from 'node:net';
 import { domainToASCII } from 'node:url';
 import BetterSqlite3 from 'better-sqlite3';
+import type { Status } from '../core/status';
 import type { Database } from '../db/connection';
 import * as targets from '../db/repositories/targets';
 import type { Target, TargetWithLatestCheck } from '../db/repositories/targets';
@@ -21,6 +22,9 @@ export interface TargetDeps {
 
 const HOST_LABEL = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const PORT_ERROR = 'Port must be a whole number from 1 to 65535.';
+/** What to look at first. ERROR sits below the known problems: the certificate may well be fine. */
+const URGENCY: Readonly<Record<Status, number>> = { EXPIRED: 0, CRITICAL: 1, WARNING: 2, ERROR: 3, OK: 4 };
+const NEVER_CHECKED_URGENCY = 5;
 
 /**
  * Normalizes the add-target form (decision 5). The host is trimmed and lowercased, and a pasted URL is cut
@@ -83,6 +87,15 @@ export function getTarget(db: Database, id: number): Target | undefined {
 
 export function listTargetsWithLatestCheck(db: Database): TargetWithLatestCheck[] {
   return targets.listTargetsWithLatestCheck(db);
+}
+
+/** Most urgent first, and the soonest expiry first within a status. Ties keep their order. */
+export function sortByUrgency(list: TargetWithLatestCheck[]): TargetWithLatestCheck[] {
+  const urgency = ({ latestCheck }: TargetWithLatestCheck) =>
+    latestCheck ? URGENCY[latestCheck.status] : NEVER_CHECKED_URGENCY;
+  return [...list].sort(
+    (a, b) => urgency(a) - urgency(b) || (a.latestCheck?.daysLeft ?? 0) - (b.latestCheck?.daysLeft ?? 0),
+  );
 }
 
 /** `example.com:443`, or `[::1]:443` for IPv6. */

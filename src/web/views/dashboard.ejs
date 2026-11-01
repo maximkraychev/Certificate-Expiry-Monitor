@@ -1,67 +1,83 @@
 <%- include('partials/header') %>
-<h1>Dashboard</h1>
+<div class="page-head">
+  <div>
+    <h1><%= summary.headline %></h1>
+    <% if (summary.detail) { %>
+      <p class="lede"><%= summary.detail %></p>
+    <% } %>
+    <% if (!hasRecipients) { %>
+      <p class="hint" id="no-recipients">
+        Nobody gets alerts yet. <a href="/recipients">Add at least one recipient</a> so expiry warnings are emailed.
+      </p>
+    <% } %>
+  </div>
 
-<% if (!hasRecipients) { %>
-  <p class="hint" id="no-recipients">
-    Nobody gets alerts yet. <a href="/recipients">Add at least one recipient</a> so expiry warnings are emailed.
-  </p>
-<% } %>
-
-<section class="card">
-  <h2>Add a target</h2>
-  <form method="post" action="/targets" class="add-target">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <label class="grow">
-      Host
-      <input type="text" name="host" placeholder="example.com" autocomplete="off" spellcheck="false" required>
-    </label>
-    <label>
-      Port
-      <input type="number" name="port" min="1" max="65535" placeholder="443">
-    </label>
-    <button type="submit">Add and check</button>
-  </form>
-</section>
+  <section class="panel">
+    <h2>Add a target</h2>
+    <form method="post" action="/targets" class="stacked">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="field-row">
+        <label>
+          Host
+          <input type="text" name="host" placeholder="example.com" autocomplete="off" spellcheck="false" required>
+        </label>
+        <label>
+          Port
+          <input type="number" name="port" min="1" max="65535" placeholder="443">
+        </label>
+      </div>
+      <button type="submit" data-busy="Checking…">Add and check</button>
+    </form>
+  </section>
+</div>
 
 <% if (targets.length === 0) { %>
-  <p class="empty">No targets yet. Add a host above to start monitoring its certificate.</p>
+  <p class="empty">No targets yet. Their certificates will appear here, with the days left until each one expires.</p>
 <% } else { %>
-  <div class="table-wrap">
-    <table class="targets">
-      <thead>
+  <table class="targets">
+    <thead>
+      <tr>
+        <th>Target</th>
+        <th>Status</th>
+        <th class="runway-col"><%- include('partials/runway-axis') %></th>
+        <th class="num">Days left</th>
+        <th class="expires-col">Expires</th>
+        <th>Last checked</th>
+        <th><span class="visually-hidden">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% for (const target of targets) { %>
+        <% const check = target.latestCheck; %>
         <tr>
-          <th>Target</th>
-          <th>Status</th>
-          <th class="num">Days left</th>
-          <th>Expires</th>
-          <th>Last checked</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% for (const target of targets) { %>
-          <% const check = target.latestCheck; %>
-          <tr>
-            <td><a href="/targets/<%= target.id %>"><%= formatHostPort(target) %></a></td>
-            <td><%- include('partials/status', { check }) %></td>
-            <td class="num"><%= check?.daysLeft ?? '—' %></td>
-            <td><%= formatDate(check?.validTo ?? null) %></td>
-            <td><%= check ? formatDateTime(check.checkedAt) : 'never' %></td>
-            <td class="actions">
+          <td class="host-cell"><a class="host-link" href="/targets/<%= target.id %>"><%= formatHostPort(target) %></a></td>
+          <td class="status-cell"><%- include('partials/status', { check, hideError: true }) %></td>
+          <td class="runway-cell">
+            <% if (check?.error) { %>
+              <div class="check-error"><%= check.error %></div>
+            <% } else { %>
+              <%- include('partials/runway', { check }) %>
+            <% } %>
+          </td>
+          <td class="num" data-label="Days left"><%= check?.daysLeft ?? '—' %></td>
+          <td class="expires-col nowrap" data-label="Expires"><%= formatDate(check?.validTo ?? null) %></td>
+          <td class="nowrap" data-label="Last checked"><%= check ? formatDateTime(check.checkedAt) : 'never' %></td>
+          <td class="actions-cell">
+            <div class="actions">
               <form method="post" action="/targets/<%= target.id %>/check">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <button type="submit" class="small">Check now</button>
+                <button type="submit" class="small" data-busy="Checking…">Check now</button>
               </form>
               <a class="small-link" href="/targets/<%= target.id %>">History</a>
               <form method="post" action="/targets/<%= target.id %>/delete">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button type="submit" class="small danger">Delete</button>
               </form>
-            </td>
-          </tr>
-        <% } %>
-      </tbody>
-    </table>
-  </div>
+            </div>
+          </td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
 <% } %>
 <%- include('partials/footer') %>

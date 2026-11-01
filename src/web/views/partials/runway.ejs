@@ -1,0 +1,9 @@
+<% const position = runwayPosition(check?.daysLeft ?? null); %>
+<div class="runway" title="<%= describeExpiry(check) %>" aria-hidden="true">
+  <% for (const zone of runwayScale.zones) { %>
+    <div class="runway-zone <%= statusClass(zone.status) %>" style="width: <%= zone.width %>%"></div>
+  <% } %>
+  <% if (position !== null) { %>
+    <span class="runway-marker <%= statusClass(check.status) %>" style="left: <%= position %>%"></span>
+  <% } %>
+</div>

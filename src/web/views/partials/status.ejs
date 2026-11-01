@@ -4,7 +4,7 @@
   <% if (untrusted) { %>
     <span class="untrusted"><%= untrusted %></span>
   <% } %>
-  <% if (check.error) { %>
+  <% if (check.error && !locals.hideError) { %>
     <div class="check-error"><%= check.error %></div>
   <% } %>
 <% } else { %>

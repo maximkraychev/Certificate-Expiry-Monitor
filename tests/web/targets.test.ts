@@ -155,6 +155,47 @@ describe('dashboard and target pages', () => {
     expect((await agent.get('/')).text).toContain(`<span class="badge ${cssClass}">${status}</span>`);
   });
 
+  it('lists the most urgent target first and leads the page with it', async () => {
+    const urgent = [
+      ['healthy.example.com', okCertCheck({ status: 'OK', daysLeft: 80 })],
+      ['failing.example.com', okCertCheck({ status: 'ERROR', daysLeft: null, validTo: null, error: 'Timed out' })],
+      ['soon.example.com', okCertCheck({ status: 'CRITICAL', daysLeft: 5 })],
+    ] as const;
+    for (const [host, check] of urgent) {
+      deps.fetchCertificate.mockResolvedValueOnce(check);
+      await post('/targets', { host, port: '' });
+    }
+
+    const { text } = await agent.get('/');
+
+    expect(text).toContain('<h1>soon.example.com:443 expires in 5 days.</h1>');
+    expect(text).toContain('1 more needs attention.');
+    const rows = ['soon', 'failing', 'healthy'].map((name) => text.indexOf(`>${name}.example.com:443</a>`));
+    expect(rows).toEqual([...rows].sort((a, b) => a - b));
+    expect(rows[0]).toBeGreaterThan(-1);
+  });
+
+  it('places a checked target on the runway, and shows the failure instead when a check fails', async () => {
+    deps.fetchCertificate.mockResolvedValueOnce(okCertCheck({ status: 'WARNING', daysLeft: 30 }));
+    await post('/targets', { host: 'dated.example.com', port: '' });
+    expect((await agent.get('/')).text).toContain('class="runway-marker status-warning" style="left: 58%"');
+
+    deps.fetchCertificate.mockResolvedValueOnce(
+      okCertCheck({ status: 'ERROR', daysLeft: null, validTo: null, error: 'Timed out' }),
+    );
+    await post('/targets', { host: 'failing.example.com', port: '' });
+    const { text } = await agent.get('/');
+    expect(text.match(/runway-marker/g)).toHaveLength(1);
+    expect(text).toContain('Timed out');
+  });
+
+  it('marks only the current page in the navigation', async () => {
+    const dashboard = (await agent.get('/')).text;
+    expect(dashboard).toContain('<a href="/" aria-current="page">Dashboard</a>');
+    expect(dashboard).toContain('<a href="/recipients">Recipients</a>');
+    expect((await agent.get('/recipients')).text).toContain('<a href="/recipients" aria-current="page">Recipients</a>');
+  });
+
   describe('POST /targets/:id/check', () => {
     it('adds a history row, sends no mail and returns to the dashboard', async () => {
       const target = seedTarget();
