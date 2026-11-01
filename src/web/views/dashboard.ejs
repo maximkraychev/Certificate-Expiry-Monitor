@@ -69,7 +69,7 @@
                 <button type="submit" class="small" data-busy="Checking…">Check now</button>
               </form>
               <a class="small-link" href="/targets/<%= target.id %>">History</a>
-              <form method="post" action="/targets/<%= target.id %>/delete">
+              <form method="post" action="/targets/<%= target.id %>/delete" <%- include('partials/confirm-delete-target', { target }) %>>
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button type="submit" class="small danger">Delete</button>
               </form>

@@ -44,6 +44,17 @@ describe('recipients page', () => {
     expect((await agent.get('/')).text).toContain('<a href="/recipients">Recipients</a>');
   });
 
+  it('asks for confirmation before removing a recipient', async () => {
+    const _csrf = await getCsrfToken(agent, '/recipients');
+    await agent.post('/recipients').type('form').send({ _csrf, email: 'ops@example.com' });
+
+    const { text } = await agent.get('/recipients');
+
+    expect(text).toContain('id="confirm-dialog"');
+    expect(text).toContain('data-confirm-title="Remove ops@example.com?"');
+    expect(text).toContain('data-confirm-action="Remove recipient"');
+  });
+
   describe('POST /recipients', () => {
     it('adds the normalized address and lists it', async () => {
       const res = await post('/recipients', { email: '  Ops@Example.COM ' });

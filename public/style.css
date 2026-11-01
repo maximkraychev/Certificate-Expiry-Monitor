@@ -6,66 +6,48 @@
   font-display: swap;
 }
 
-/* Colour only ever means status. Everything else is ink on one surface. */
+/*
+ * Colour only ever means status. Everything else is ink on one surface.
+ * Tokens are light-dark(light, dark): the system setting picks one, unless public/theme.js has set a saved theme.
+ */
 :root {
   color-scheme: light dark;
 
-  --page: #fbfcfd;
-  --panel: #f1f4f7;
-  --ink: #14263a;
-  --ink-hover: #27415c;
-  --on-ink: #ffffff;
-  --muted: #566575;
-  --rule: #dce3e9;
-  --rule-strong: #b4c0cb;
+  --page: light-dark(#fbfcfd, #0f1b28);
+  --panel: light-dark(#f1f4f7, #172534);
+  --ink: light-dark(#14263a, #e7eef3);
+  --ink-hover: light-dark(#27415c, #c6d3dd);
+  --on-ink: light-dark(#ffffff, #0f1b28);
+  --muted: light-dark(#566575, #98a9b8);
+  --rule: light-dark(#dce3e9, #263645);
+  --rule-strong: light-dark(#b4c0cb, #41566a);
 
   /* Each status has a mark (runway), a text colour and a tint behind that text. */
-  --ok: #0b7a5b;
-  --ok-text: #0a6b50;
-  --ok-tint: #e2f4ee;
-  --warning: #c17f00;
-  --warning-text: #8a5500;
-  --warning-tint: #fcf0d2;
-  --critical: #d2361c;
-  --critical-text: #b92d16;
-  --critical-tint: #fce8e3;
-  --expired: #a3186e;
-  --expired-text: #8e1560;
-  --expired-tint: #f8e4f1;
-  --error: #5449a6;
-  --error-text: #4f45a0;
-  --error-tint: #eceaf9;
+  --ok: light-dark(#0b7a5b, #1fa67e);
+  --ok-text: light-dark(#0a6b50, #5ed8b3);
+  --ok-tint: light-dark(#e2f4ee, #123229);
+  --warning: light-dark(#c17f00, #b48a00);
+  --warning-text: light-dark(#8a5500, #f3c358);
+  --warning-tint: light-dark(#fcf0d2, #33280f);
+  --critical: light-dark(#d2361c, #d02f1f);
+  --critical-text: light-dark(#b92d16, #ff9077);
+  --critical-tint: light-dark(#fce8e3, #3a1c16);
+  --expired: light-dark(#a3186e, #c74fb0);
+  --expired-text: light-dark(#8e1560, #f08ad8);
+  --expired-tint: light-dark(#f8e4f1, #351a33);
+  --error: light-dark(#5449a6, #8478e6);
+  --error-text: light-dark(#4f45a0, #b8affb);
+  --error-tint: light-dark(#eceaf9, #23203f);
 
   --gutter: clamp(1rem, 4vw, 2.5rem);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --page: #0f1b28;
-    --panel: #172534;
-    --ink: #e7eef3;
-    --ink-hover: #c6d3dd;
-    --on-ink: #0f1b28;
-    --muted: #98a9b8;
-    --rule: #263645;
-    --rule-strong: #41566a;
+:root[data-theme="light"] {
+  color-scheme: light;
+}
 
-    --ok: #1fa67e;
-    --ok-text: #5ed8b3;
-    --ok-tint: #123229;
-    --warning: #b48a00;
-    --warning-text: #f3c358;
-    --warning-tint: #33280f;
-    --critical: #d02f1f;
-    --critical-text: #ff9077;
-    --critical-tint: #3a1c16;
-    --expired: #c74fb0;
-    --expired-text: #f08ad8;
-    --expired-tint: #351a33;
-    --error: #8478e6;
-    --error-text: #b8affb;
-    --error-tint: #23203f;
-  }
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 .status-ok {
@@ -199,8 +181,49 @@ h2 {
   box-shadow: 0 2px 0 var(--ink);
 }
 
-.logout {
+.header-end {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   margin-left: auto;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  min-height: 2rem;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+}
+
+.theme-toggle:hover {
+  color: var(--ink);
+  background: var(--panel);
+}
+
+.theme-toggle[hidden] {
+  display: none;
+}
+
+/* Shows the theme a click switches to. */
+.theme-toggle .icon-moon,
+.theme-toggle[data-current="dark"] .icon-sun {
+  display: block;
+}
+
+.theme-toggle .icon-sun,
+.theme-toggle[data-current="dark"] .icon-moon {
+  display: none;
+}
+
+@media (max-width: 30rem) {
+  .site-header nav {
+    order: 1;
+    width: 100%;
+  }
 }
 
 /* Page layout */
@@ -336,6 +359,63 @@ button.danger {
 
 button.danger:hover {
   background: var(--critical-tint);
+}
+
+/* Only the final, confirming step of a delete is filled in. */
+button.destructive {
+  color: #ffffff;
+  background: var(--critical);
+}
+
+button.destructive:hover {
+  background: color-mix(in srgb, var(--critical) 85%, #000000);
+}
+
+/* Confirmation popup. The padding is on the inner box so a click on the dialog itself is a click on the backdrop. */
+
+.confirm-dialog {
+  width: min(27rem, calc(100vw - 2rem));
+  padding: 0;
+  color: var(--ink);
+  background: var(--page);
+  border: 1px solid var(--rule-strong);
+  border-radius: 10px;
+}
+
+.confirm-dialog[open] {
+  animation: dialog-in 140ms ease-out;
+}
+
+.confirm-dialog::backdrop {
+  background: rgb(8 16 26 / 0.55);
+}
+
+.confirm-inner {
+  padding: 1.5rem;
+}
+
+.confirm-inner h2 {
+  overflow-wrap: anywhere;
+}
+
+.confirm-inner p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
 }
 
 .link-button {
@@ -729,7 +809,8 @@ td.runway-cell .check-error {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .flash {
+  .flash,
+  .confirm-dialog[open] {
     animation: none;
   }
 }

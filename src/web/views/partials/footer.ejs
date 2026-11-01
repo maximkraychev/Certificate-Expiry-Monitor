@@ -1,3 +1,6 @@
   </main>
+  <% if (isAuthenticated) { %>
+    <%- include('confirm-dialog') %>
+  <% } %>
 </body>
 </html>

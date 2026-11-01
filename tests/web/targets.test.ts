@@ -196,6 +196,31 @@ describe('dashboard and target pages', () => {
     expect((await agent.get('/recipients')).text).toContain('<a href="/recipients" aria-current="page">Recipients</a>');
   });
 
+  it('offers the theme toggle signed in and out, with the saved theme applied before the stylesheet', async () => {
+    for (const res of [await agent.get('/'), await request(app).get('/login')]) {
+      expect(res.text).toContain('id="theme-toggle"');
+      expect(res.text.indexOf('src="/theme.js"')).toBeGreaterThan(-1);
+      expect(res.text.indexOf('src="/theme.js"')).toBeLessThan(res.text.indexOf('href="/style.css"'));
+    }
+  });
+
+  it('asks for confirmation before deleting a target, on both pages that offer it', async () => {
+    const target = seedTarget('example.com', 8443);
+
+    for (const path of ['/', `/targets/${target.id}`]) {
+      const { text } = await agent.get(path);
+      expect(text).toContain('id="confirm-dialog"');
+      expect(text).toContain(
+        `action="/targets/${target.id}/delete" data-confirm-title="Delete example.com:8443?"`,
+      );
+      expect(text).toContain('data-confirm-action="Delete target"');
+    }
+  });
+
+  it('has no confirmation dialog on the login page', async () => {
+    expect((await request(app).get('/login')).text).not.toContain('confirm-dialog');
+  });
+
   describe('POST /targets/:id/check', () => {
     it('adds a history row, sends no mail and returns to the dashboard', async () => {
       const target = seedTarget();

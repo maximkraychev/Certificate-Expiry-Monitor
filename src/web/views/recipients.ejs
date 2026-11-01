@@ -36,7 +36,7 @@
             <td><%= recipient.email %></td>
             <td><%= formatDateTime(recipient.createdAt) %></td>
             <td class="actions-cell">
-              <form method="post" action="/recipients/<%= recipient.id %>/delete">
+              <form method="post" action="/recipients/<%= recipient.id %>/delete" data-confirm-title="Remove <%= recipient.email %>?" data-confirm-body="This address will stop getting digest emails." data-confirm-action="Remove recipient">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button type="submit" class="small danger">Remove</button>
               </form>
